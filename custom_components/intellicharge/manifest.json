@@ -1,9 +1,9 @@
 {
   "domain": "intellicharge",
-  "name": "IntelliCharge",
-  "codeowners": ["@ryjogo"],
+  "name": "IntelliCharge V2",
+  "codeowners": ["@zamzon"],
   "config_flow": true,
-  "documentation": "https://github.com/ryjogo/hacs-intellicharge",
+  "documentation": "https://github.com/zamzon/hacs-intellicharge-v2",
   "requirements": [],
   "iot_class": "cloud_polling",
   "version": "1.0.1"
