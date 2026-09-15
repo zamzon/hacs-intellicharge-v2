@@ -20,7 +20,7 @@ PLATFORMS = [
     Platform.SENSOR,
     Platform.NUMBER,
 ]
-UPDATE_INTERVAL = timedelta(minutes=1)
+UPDATE_INTERVAL = timedelta(minutes=15)
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
