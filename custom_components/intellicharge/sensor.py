@@ -29,6 +29,8 @@ class IntelliChargeChargingRulesSensor(
     CoordinatorEntity,
     SensorEntity,
 ):
+    """Charging rules sensor."""
+
     def __init__(self, coordinator):
         super().__init__(coordinator)
 
@@ -43,7 +45,8 @@ class IntelliChargeChargingRulesSensor(
     @property
     def native_value(self):
         rules = self.coordinator.data.get(
-            "charging_rules", []
+            "charging_rules",
+            [],
         )
 
         return len(rules)
@@ -62,6 +65,8 @@ class IntelliChargeCurrentActionSensor(
     CoordinatorEntity,
     SensorEntity,
 ):
+    """Current IntelliCharge action."""
+
     def __init__(self, coordinator):
         super().__init__(coordinator)
 
@@ -73,23 +78,39 @@ class IntelliChargeCurrentActionSensor(
             "intellicharge_current_action"
         )
 
+        self._attr_icon = (
+            "mdi:battery-charging"
+        )
+
     @property
     def native_value(self):
         data = self.coordinator.data.get(
             "current_action",
-            {}
+            {},
         )
+
+        if not isinstance(data, dict):
+            return str(data)
 
         return (
             data.get("action")
             or data.get("status")
             or data.get("title")
+            or data.get("currentAction")
+            or data.get("current_action")
             or "Unknown"
         )
 
     @property
     def extra_state_attributes(self):
-        return self.coordinator.data.get(
+        data = self.coordinator.data.get(
             "current_action",
-            {}
+            {},
         )
+
+        if isinstance(data, dict):
+            return data
+
+        return {
+            "raw_data": data
+    
