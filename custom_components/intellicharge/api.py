@@ -113,6 +113,24 @@ class IntelliChargeAPI:
 
             return await response.json()
 
+    async def async_get_current_action(self):
+        """Get current IntelliCharge action."""
+
+        headers = await self._headers()
+
+        url = (
+            f"{API_BASE_URL}/api/v2/planner/current-action/"
+            f"{self._plant_id}"
+        )
+
+        async with self._session.get(
+            url,
+            headers=headers,
+        ) as response:
+            response.raise_for_status()
+
+            return await response.json()
+
     async def async_set_custom_charging_rules(self, rules):
         """Set charging rules."""
 
