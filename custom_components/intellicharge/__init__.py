@@ -3,16 +3,17 @@
 import logging
 from datetime import timedelta
 
+import voluptuous as vol
+
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant, ServiceCall
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.update_coordinator import (
     DataUpdateCoordinator,
     UpdateFailed,
 )
-import voluptuous as vol
-from homeassistant.helpers import config_validation as cv
 
 from .api import IntelliChargeAPI
 
@@ -25,14 +26,14 @@ PLATFORMS = [
     Platform.NUMBER,
 ]
 
-UPDATE_INTERVAL = timedelta(minutes=15)
+UPDATE_INTERVAL = timedelta(minutes=1)
 
 
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: ConfigEntry,
 ) -> bool:
-    """Set up IntelliCharge from a config entry."""
+    """Set up IntelliCharge from config entry."""
 
     session = async_get_clientsession(hass)
 
@@ -61,7 +62,7 @@ async def async_setup_entry(
     async def handle_set_charging_rules(
         call: ServiceCall,
     ) -> None:
-        """Handle set charging rules."""
+        """Handle set charging rules service."""
 
         rules = call.data.get("rules")
 
@@ -69,6 +70,7 @@ async def async_setup_entry(
             await api.async_set_custom_charging_rules(
                 rules
             )
+
             await coordinator.async_request_refresh()
 
         except Exception as err:
@@ -99,22 +101,30 @@ async def async_unload_entry(
     hass: HomeAssistant,
     entry: ConfigEntry,
 ) -> bool:
-    """Unload a config entry."""
+    """Unload config entry."""
 
-    unload_ok = (
-        await hass.config_entries.async_unload_platforms(
-            entry,
-            PLATFORMS,
-        )
+    unload_ok = await hass.config_entries.async_unload_platforms(
+        entry,
+        PLATFORMS,
     )
 
     if unload_ok:
-        hass.data[DOMAIN].pop(entry.entry_id)
+        hass.data[DOMAIN].pop(
+            entry.entry_id,
+            None,
+        )
 
-        if not hass.datahass.services.async_remove(
-                DOMAIN,
-                "set_charging_rules",
-            )
+        if (
+            DOMAIN in hass.data
+            and not hass.data[DOMAIN]
+        ):
+            try:
+                hass.services.async_remove(
+                    DOMAIN,
+                    "set_charging_rules",
+                )
+            except Exception:
+                pass
 
     return unload_ok
 
@@ -122,15 +132,13 @@ async def async_unload_entry(
 class IntelliChargeDataUpdateCoordinator(
     DataUpdateCoordinator
 ):
-    """Manage IntelliCharge data."""
+    """Coordinator."""
 
     def __init__(
         self,
         hass: HomeAssistant,
         api: IntelliChargeAPI,
     ) -> None:
-        """Initialize."""
-
         self.api = api
 
         super().__init__(
@@ -141,28 +149,30 @@ class IntelliChargeDataUpdateCoordinator(
         )
 
     async def _async_update_data(self):
-        """Fetch data from IntelliCharge."""
+        """Fetch data."""
 
         try:
-            data = await self.api.async_get_data()
+            settings = await self.api.async_get_data()
 
             charging_rules = (
                 await self.api.async_get_custom_charging_rules()
             )
 
+            current_action = {}
+
             try:
                 current_action = (
                     await self.api.async_get_current_action()
-                )
+                ) or {}
+
             except Exception as err:
                 _LOGGER.warning(
                     "Failed to get current action: %s",
                     err,
                 )
-                current_action = {}
 
             return {
-                "savings": data,
+                "savings": settings,
                 "charging_rules": charging_rules,
                 "current_action": current_action,
             }
