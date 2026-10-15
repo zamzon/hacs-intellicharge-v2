@@ -17,7 +17,10 @@ async def async_setup_entry(
         [
             IntelliChargeChargingRulesSensor(
                 coordinator
-            )
+            ),
+            IntelliChargeCurrentActionSensor(
+                coordinator
+            ),
         ]
     )
 
@@ -53,3 +56,40 @@ class IntelliChargeChargingRulesSensor(
                 [],
             )
         }
+
+
+class IntelliChargeCurrentActionSensor(
+    CoordinatorEntity,
+    SensorEntity,
+):
+    def __init__(self, coordinator):
+        super().__init__(coordinator)
+
+        self._attr_name = (
+            "IntelliCharge Current Action"
+        )
+
+        self._attr_unique_id = (
+            "intellicharge_current_action"
+        )
+
+    @property
+    def native_value(self):
+        data = self.coordinator.data.get(
+            "current_action",
+            {}
+        )
+
+        return (
+            data.get("action")
+            or data.get("status")
+            or data.get("title")
+            or "Unknown"
+        )
+
+    @property
+    def extra_state_attributes(self):
+        return self.coordinator.data.get(
+            "current_action",
+            {}
+        )
