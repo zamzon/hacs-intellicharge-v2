@@ -24,6 +24,9 @@ async def async_setup_entry(
             IntelliChargeCurrentActionDescriptionSensor(
                 coordinator
             ),
+            IntelliChargeCurrentActionRawSensor(
+                coordinator
+            ),
         ]
     )
 
@@ -105,23 +108,34 @@ class IntelliChargeCurrentActionDescriptionSensor(
     SensorEntity,
 ):
     DESCRIPTIONS = {
-        "self_consumption":
-            "Systemet bruger den genererede energi til dit forbrug, opbevarer overskuddet i batteriet og sender overskydende energi til elnettet, når batteriet er fuldt. Hvis det er nødvendigt, importeres ekstra energi fra elnettet.",
-
-        "charge":
-            "Systemet oplader batteriet fra elnettet enten for at dække forventede energibehov eller for at lagre energi til fremtidigt salg og fortjeneste.",
-
-        "discharge":
-            "Systemet aflader batteriet til elnettet og sælger den lagrede energi for ekstra indtægter.",
-
-        "idle":
-            "Systemet er på standby og bevarer den lagrede energi til senere brug, når priserne er højere. Nuværende energibehov dækkes af produceret energi eller importeres fra elnettet.",
-
-        "locked":
-            "Systemet er låst, og batteriet er ikke i brug. Forbruget dækkes af solenergi (eller importeres om nødvendigt), og overskuddet sendes til elnettet.",
-
-        "no_new_command":
-            "Ingen ny kommando blev sendt denne time; systemet er enten i selvforbrugstilstand eller følger den sidste kommando.",
+        "self_consumption": (
+            "Systemet bruger den genererede energi til dit forbrug, "
+            "opbevarer overskuddet i batteriet og sender "
+            "overskydende energi til elnettet, når batteriet er "
+            "fuldt. Hvis det er nødvendigt, importeres ekstra "
+            "energi fra elnettet."
+        ),
+        "charge": (
+            "Systemet oplader batteriet fra elnettet enten for at "
+            "dække forventede energibehov eller for at lagre energi "
+            "til fremtidigt salg og fortjeneste."
+        ),
+        "discharge": (
+            "Systemet aflader batteriet til elnettet og sælger den "
+            "lagrede energi for ekstra indtægter."
+        ),
+        "idle": (
+            "Systemet er på standby og bevarer den lagrede energi "
+            "til senere brug, når priserne er højere."
+        ),
+        "locked": (
+            "Systemet er låst, og batteriet er ikke i brug."
+        ),
+        "no_new_command": (
+            "Ingen ny kommando blev sendt denne time; systemet er "
+            "enten i selvforbrugstilstand eller følger den sidste "
+            "kommando."
+        ),
     }
 
     def __init__(self, coordinator):
@@ -152,4 +166,42 @@ class IntelliChargeCurrentActionDescriptionSensor(
         return self.DESCRIPTIONS.get(
             mode,
             "Ukendt",
+        )
+
+
+class IntelliChargeCurrentActionRawSensor(
+    CoordinatorEntity,
+    SensorEntity,
+):
+    """Raw IntelliCharge response for debugging."""
+
+    def __init__(self, coordinator):
+        super().__init__(coordinator)
+
+        self._attr_name = (
+            "IntelliCharge Current Action Raw"
+        )
+
+        self._attr_unique_id = (
+            "intellicharge_current_action_raw"
+        )
+
+        self._attr_entity_registry_enabled_default = (
+            False
+        )
+
+        self._attr_icon = "mdi:code-json"
+
+    @property
+    def native_value(self):
+        return "Raw Data"
+
+    @property
+    def extra_state_attributes(self):
+        return (
+            self.coordinator.data.get(
+                "current_action",
+                {},
+            )
+            or {}
         )
